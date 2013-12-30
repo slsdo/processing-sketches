@@ -1,4 +1,4 @@
-InteractiveBackground
+InteractiveSketch
 =====================
 
 Interactive ambient sketch for websites
