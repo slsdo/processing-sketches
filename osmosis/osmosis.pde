@@ -1,18 +1,21 @@
-/* Osmosis
-   Version 1.0 - 2010/07/15 */
+/* Osmosis - Version 1.1 - 2013/12/29 */
 
 // Global variables
 World world;
+int CWIDTH = 900;
+int CHEIGHT = 200;
+int INIT_CELL = 5;
+int MAX_CELL = 10;
 
 // Setup the Processing Canvas
 void setup() {
-  size(700, 500);
+  size(CWIDTH, CHEIGHT);
   frameRate(15);
 
   world = new World();
   world.addCell(new Cell(0, width*0.5, height*0.5, 3));
   // Add an initial set of cells into the system
-  for (int i = 0; i < 5; i++) {
+  for (int i = 0; i < INIT_CELL; i++) {
     int type = world.generateType();
     world.addCell(new Cell(type, random(width), random(height), ceil(random(10))));
   }
@@ -24,7 +27,8 @@ void draw() {
   // Fill canvas black
   background(0);
 
-  if (world.cells.size() < 20 && round(random(5)) == 0.0) {
+  // Generate more cells
+  if (world.cells.size() < MAX_CELL && round(random(5)) == 0.0) {
     int type = world.generateType();
     int rand = round(random(2));
     if (rand == 0) { 
@@ -147,7 +151,7 @@ class Cell {
   void move() {
     // If there is a set target
     if (goal) {
-      if (type == 0) metabolism(0.003);
+      if (type == 0) metabolism(0.0025);
       else metabolism(0.007);
 
       if (!dead) {
