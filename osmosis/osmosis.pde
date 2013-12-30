@@ -1,15 +1,13 @@
-/* Osmosis - Version 1.1 - 2013/12/29 */
+/* Osmosis - v1.1 - 2013/12/29 */
 
 // Global variables
 World world;
-int CWIDTH = 900;
-int CHEIGHT = 200;
 int INIT_CELL = 5;
 int MAX_CELL = 10;
 
 // Setup the Processing Canvas
 void setup() {
-  size(CWIDTH, CHEIGHT);
+  size(900, 200);
   frameRate(15);
 
   world = new World();

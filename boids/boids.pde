@@ -1,7 +1,9 @@
 /* Boids - v1.1 - 2013/12/29 */
    
 // Global variables
-World world;
+int CWIDTH = 900;
+int CHEIGHT = 200;
+
 int bNum = 15;
 int pNum = 1;
 int oNum = 2;
@@ -23,7 +25,7 @@ float NRadius = 0.3; // Wander: radius of wander noise circle
 float BRadius = 20.0; // Avoid: radius of agent bounding sphere
 float ORadius = 20.0; // Avoid: radius of object bounding sphere
 float CStep = 1.0/100.0; // Cohesion: move it #% of the way towards the center
-float SDistance = 6000.0f; // Separation: small separation distance
+float SDistance = 100.0f; // Separation: small separation distance
 float AVelocity = 1.0/8.0; // Alignment: add a small portion to the velocity
 
 // Weight constants
@@ -40,7 +42,6 @@ void setup() {
   size(900, 200);  
   world = new World();
   frameRate(40);
-  smooth();
 }
 
 // Main draw loop
@@ -49,74 +50,12 @@ void draw() {
   world.run();
 }
 
-void keyPressed() {
-  // Display info
-  if (key == 'a') {
-    info = !info;
-  }
-  // Boundary mode
-  if (key == 's') {
-    bounded = !bounded;
-    redraw();
-  }
-  // Debug mode
-  if (key == 'd') {
-    debug = !debug;
-    redraw();
-  }
-  // Reset
-  if (key == ' ') {
-    world = new World();
-    redraw();
-  }
-}
-
-void mousePressed() {
-  if (keyPressed) {
-    if (mouseButton == LEFT) {
-      // Add boid
-      if (key == 'z') {
-        Agent boid = new Agent(mouseX, mouseY, 1);
-        world.boids.add(boid);
-      }
-      else if (key == 'x') {
-        Agent predator = new Agent(mouseX, mouseY, 2);
-        world.predators.add(predator);
-      }
-      else if (key == 'c') {
-        Obj obj = new Obj(mouseX, mouseY, random(50, 100), round(random(1, 2)));
-        world.objs.add(obj);
-      }
-    }
-    if (mouseButton == RIGHT) {
-      // Remove boid
-      if (key == 'z') {
-        if (world.boids.size() > 0) {
-          world.boids.remove(0);      
-        }
-      }
-      // Remove predator
-      else if (key == 'x') {
-        if (world.predators.size() > 0) {
-          world.predators.remove(0);      
-        }
-      }
-      // Remove object
-      else if (key == 'c') {
-        if (world.objs.size() > 0) {
-          world.objs.remove(0);      
-        }
-      }
-    }
-  }
-}
-
 class Agent {
   float mass;
   float energy;
-  Vector3D pos; // Position
-  Vector3D vel; // Velocity
-  Vector3D acc; // Acceleration
+  PVector pos; // Position
+  PVector vel; // Velocity
+  PVector acc; // Acceleration
   int type; // Agent type
   float wdelta; // Wander delta
   int action; // Current action
@@ -132,9 +71,9 @@ class Agent {
   Agent(float px, float py, int t) {
     mass = 10.0;
     energy = 10*ceil(random(5, 10));
-    pos = new Vector3D(px, py);
-    vel = new Vector3D(random(-5, 5), random(-5, 5));
-    acc = new Vector3D();
+    pos = new PVector(px, py);
+    vel = new PVector(random(-5, 5), random(-5, 5));
+    acc = new PVector();
     type = t;
     wdelta = 0.0;
     action = 0;
@@ -142,7 +81,7 @@ class Agent {
   }
 
   void run(ArrayList boids, ArrayList predators, ArrayList objs) {
-    acc.setXYZ(0, 0, 0); // Reset accelertion to 0 each cycle
+    acc.set(0, 0, 0); // Reset accelertion to 0 each cycle
     steer(boids, predators, objs); // Update steering with approprate behavior
     vel.add(acc); // Update velocity
     switch (action) {
@@ -159,13 +98,13 @@ class Agent {
   void steer(ArrayList boids, ArrayList predators, ArrayList objs) { 
     if (type == 2) predator(boids); // Determine current action
     // Initialize steering forces
-    Vector3D wan = new Vector3D();
-    Vector3D flo = new Vector3D();
-    Vector3D avo = new Vector3D();
-    Vector3D pur = new Vector3D();
-    Vector3D eva = new Vector3D();
-    Vector3D arr = new Vector3D();
-    Vector3D dep = new Vector3D();
+    PVector wan = new PVector();
+    PVector flo = new PVector();
+    PVector avo = new PVector();
+    PVector pur = new PVector();
+    PVector eva = new PVector();
+    PVector arr = new PVector();
+    PVector dep = new PVector();
     // Calculate steering forces
     switch (action) {
       // Evading
@@ -200,12 +139,12 @@ class Agent {
     if (mousePressed && keyPressed == false && type == 1) {
       // Left mouse button - Arrival
       if (mouseButton == LEFT) {
-        Vector3D mouse = new Vector3D(mouseX, mouseY);
+        PVector mouse = new PVector(mouseX, mouseY);
         arr = arrival(mouse);
       }
       // Right mouse button - Departure
       else if (mouseButton == RIGHT) {
-        Vector3D mouse = new Vector3D(mouseX, mouseY);
+        PVector mouse = new PVector(mouseX, mouseY);
         dep = departure(mouse);
         dep.mult(maxevade);
       }
@@ -235,46 +174,46 @@ class Agent {
     if (energy > 10 && action == 2) action = 0;
   }
 
-  Vector3D seek(Vector3D target) {
-    Vector3D steer; // The steering vector
-    Vector3D desired = Vector3D.sub(target, pos); // A vector pointing from current location to the target
-    float distance = desired.mag2(); // Distance from the target is the magnitude of the vector
+  PVector seek(PVector target) {
+    PVector steer; // The steering vector
+    PVector desired = PVector.sub(target, pos); // A vector pointing from current location to the target
+    float distance = desired.magSq(); // Distance from the target is the magnitude of the vector
     // If the distance is greater than 0, calc steering (otherwise return zero vector)
     if (distance > 0) {
       desired.normalize(); // Normalize desired
 
       desired.mult(maxforce);
 
-      steer = Vector3D.sub(desired, vel); // Steering = Desired minus Velocity
+      steer = PVector.sub(desired, vel); // Steering = Desired minus Velocity
     }
     else {
-      steer = new Vector3D(0, 0);
+      steer = new PVector(0, 0);
     }
     return steer;
   }
 
-  Vector3D flee(Vector3D target) {
-    Vector3D steer; // The steering vector
-    Vector3D desired = Vector3D.sub(target, pos); // A vector pointing from current location to the target
-    float distance = desired.mag2(); // Distance from the target is the magnitude of the vector
+  PVector flee(PVector target) {
+    PVector steer; // The steering vector
+    PVector desired = PVector.sub(target, pos); // A vector pointing from current location to the target
+    float distance = desired.magSq(); // Distance from the target is the magnitude of the vector
     // If the distance is greater than 0, calc steering (otherwise return zero vector)
     if (distance > 0 && distance < ARadius*100) {
       desired.normalize(); // Normalize desired
 
       desired.mult(maxforce);
 
-      steer = Vector3D.sub(vel, desired); // Steering = Desired minus Velocity
+      steer = PVector.sub(vel, desired); // Steering = Desired minus Velocity
     }
     else {
-      steer = new Vector3D(0, 0);
+      steer = new PVector(0, 0);
     }
     return steer;
   }
 
-  Vector3D arrival(Vector3D target) {
-    Vector3D steer; // The steering vector
-    Vector3D desired = Vector3D.sub(target, pos); // A vector pointing from current location to the target
-    float distance = desired.mag2(); // Distance from the target is the magnitude of the vector
+  PVector arrival(PVector target) {
+    PVector steer; // The steering vector
+    PVector desired = PVector.sub(target, pos); // A vector pointing from current location to the target
+    float distance = desired.magSq(); // Distance from the target is the magnitude of the vector
     // If the distance is greater than 0, calc steering (otherwise return zero vector)
     if (distance > 0) {
       desired.normalize(); // Normalize desired
@@ -282,18 +221,18 @@ class Agent {
       if (distance < ARadius) desired.mult(maxspeed*(distance/ARadius)); // This damping is somewhat arbitrary
       else desired.mult(maxforce);
 
-      steer = Vector3D.sub(desired, vel); // Steering = Desired minus Velocity
+      steer = PVector.sub(desired, vel); // Steering = Desired minus Velocity
     }
     else {
-      steer = new Vector3D();
+      steer = new PVector();
     }
     return steer;
   }
 
-  Vector3D departure(Vector3D target) {
-    Vector3D steer; // The steering vector
-    Vector3D desired = Vector3D.sub(target, pos); // A vector pointing from current location to the target
-    float distance = desired.mag2(); // Distance from the target is the magnitude of the vector
+  PVector departure(PVector target) {
+    PVector steer; // The steering vector
+    PVector desired = PVector.sub(target, pos); // A vector pointing from current location to the target
+    float distance = desired.magSq(); // Distance from the target is the magnitude of the vector
     // If the distance is greater than 0, calc steering (otherwise return zero vector)
     if (distance > 0 && distance < ARadius*100) {
       desired.normalize(); // Normalize desired
@@ -301,30 +240,30 @@ class Agent {
       if (distance < ARadius) desired.mult(maxspeed*(ARadius/distance)); // This damping is somewhat arbitrary
       else desired.mult(maxforce);
 
-      steer = Vector3D.sub(vel, desired); // Steering = Desired minus Velocity
+      steer = PVector.sub(vel, desired); // Steering = Desired minus Velocity
     }
     else {
-      steer = new Vector3D();
+      steer = new PVector();
     }
     return steer;
   }
   
-  Vector3D pursue(ArrayList boids) {
-    Vector3D steer = new Vector3D();
+  PVector pursue(ArrayList boids) {
+    PVector steer = new PVector();
     if (prey < boids.size()) {
       Agent boid = (Agent) boids.get(prey);
-      steer = Vector3D.sub(boid.pos, pos);
+      steer = PVector.sub(boid.pos, pos);
       steer.mult(maxpursue);
     }
     return steer;
   }
   
-  Vector3D evade(ArrayList predators) {
-    Vector3D steer = new Vector3D();
+  PVector evade(ArrayList predators) {
+    PVector steer = new PVector();
     for (int i = 0; i < predators.size(); i++) {
       Agent predator = (Agent) predators.get(i);
-      float distance = Vector3D.dist2(pos, predator.pos);
-      if (distance < ERadius*ERadius) {
+      float distance = PVector.dist(pos, predator.pos);
+      if (distance < ERadius) {
         action = 1;
         steer = flee(predator.pos);
         steer.mult(maxevade);
@@ -335,51 +274,51 @@ class Agent {
     return steer;
   }
 
-  Vector3D wander() {
+  PVector wander() {
     wdelta += random(-NRadius, NRadius); // Determine noise ratio
     // Calculate the new location to steer towards on the wander circle
-    Vector3D center = vel.get(); // Get center of wander circle
+    PVector center = vel.get(); // Get center of wander circle
     center.mult(60.0); // Multiply by distance
     center.add(pos); // Make it relative to boid's location
     // Apply offset to get new target    
-    Vector3D offset = new Vector3D(WRadius*cos(wdelta), WRadius*sin(wdelta));
-    Vector3D target = Vector3D.add(center, offset); // Determine new target
+    PVector offset = new PVector(WRadius*cos(wdelta), WRadius*sin(wdelta));
+    PVector target = PVector.add(center, offset); // Determine new target
     // Steer toward new target    
-    Vector3D steer = seek(target); // Steer towards it    
+    PVector steer = seek(target); // Steer towards it    
     return steer;
   }
   
-  Vector3D avoid(ArrayList objs) {
-    Vector3D steer  = new Vector3D();    
+  PVector avoid(ArrayList objs) {
+    PVector steer  = new PVector();    
 
     for (int i = 0; i < objs.size(); i++) {
       Obj obj = (Obj) objs.get(i);
       // Distance between object and avoidance sphere
-      float distance = Vector3D.dist2(obj.pos, pos);
+      float distance = PVector.dist(obj.pos, pos);
       // If distance is less than the sum of the two radius, there is collision
       float bound = obj.mass*0.5 + BRadius + ORadius;
-      if (distance < bound*bound) {
+      if (distance < bound) {
         wAvo = 10.0;
         wWan = 0.1;
         float collision = (obj.mass + mass)*0.5;
-        if (distance < collision*collision) {
-          steer = Vector3D.sub(pos, obj.pos);
+        if (distance < collision) {
+          steer = PVector.sub(pos, obj.pos);
           steer.mult(maxforce*0.1);
           return steer;
         }
         else {
-          float direction = Vector3D.dist2(obj.pos, Vector3D.add(pos, vel));
+          float direction = PVector.dist(obj.pos, PVector.add(pos, vel));
           // If is heading toward obstacle
           if (direction < distance) {
             // If steering in the verticle direction
             if (abs(vel.x) <= abs(vel.y)) {   
-              steer = new Vector3D((pos.x - obj.pos.x), vel.y);
-              steer.mult(maxforce*((bound*bound)/distance)*0.001);       
+              steer = new PVector((pos.x - obj.pos.x), vel.y);
+              steer.mult(maxforce*((bound)/distance)*0.001);       
             }
             // If steering in the horizontal direction
             else {
-              steer = new Vector3D(vel.x, (pos.y - obj.pos.y));
-              steer.mult(maxforce*((bound*bound)/distance)*0.001);  
+              steer = new PVector(vel.x, (pos.y - obj.pos.y));
+              steer.mult(maxforce*((bound)/distance)*0.001);  
             }
           }
         }
@@ -388,30 +327,29 @@ class Agent {
     return steer;
   }
 
-  Vector3D flocking(ArrayList boids) {
+  PVector flocking(ArrayList boids) {
     // Get steering forces
-    Vector3D steer = new Vector3D();
-    Vector3D coh = new Vector3D(); // Perceived center
-    Vector3D sep = new Vector3D(); // Displacement
-    Vector3D ali = new Vector3D(); // Perceived velocity
+    PVector steer = new PVector();
+    PVector coh = new PVector(); // Perceived center
+    PVector sep = new PVector(); // Displacement
+    PVector ali = new PVector(); // Perceived velocity
     int count = 0;
     // Agents try to fly towards the centre of mass of neighbouring agents
     // Agents try to keep a small distance away from other objects (including other agents)
     // Agents try to match velocity with near agents
     for (int i = 0; i < boids.size(); i++) {
       Agent boid = (Agent) boids.get(i);
-      float distance = Vector3D.dist2(pos, boid.pos);
+      float distance = PVector.dist(pos, boid.pos);
       // Go through each agents
-      if (this != boid && distance < Rn*Rn) {
+      if (this != boid && distance < Rn) {
         coh.add(boid.pos); // Cohesion
         ali.add(boid.vel); // Alignment
         count++;
       }      
       // Separation
       if (this != boid && distance < SDistance) {
-        Vector3D diff = Vector3D.sub(boid.pos, pos); // (agent.position - bJ.position)
+        PVector diff = PVector.sub(boid.pos, pos); // (agent.position - bJ.position)
         diff.normalize();
-        distance = (float) Math.sqrt(distance);
         diff.div(distance); // Weighed by distance
         sep.sub(diff); // c = c - (agent.position - bJ.position)
       }
@@ -469,13 +407,13 @@ class Agent {
       fill(156, 206, 255);
       stroke(16, 16, 222);
       ellipse(pos.x, pos.y, mass, mass);
-      Vector3D dir = vel.get();
+      PVector dir = vel.get();
       dir.normalize();
       line(pos.x, pos.y, pos.x + dir.x*10, pos.y + dir.y*10);
     }
     else if (type == 2) {
-      // Draw a triangle rotated in the direction of velocity        
-      float theta = vel.heading2D() + radians(90);
+      // Draw a triangle rotated in the direction of velocity    
+      float theta = (-1*((float) Math.atan2(-vel.y, vel.x))) + radians(90);
       pushMatrix();
       translate(pos.x, pos.y);
       rotate(theta);
@@ -510,12 +448,12 @@ class Agent {
 }
 
 class Obj {
-  Vector3D pos;
+  PVector pos;
   float mass;
   int type;
 
   Obj(float px, float py, float m, int t) {
-    pos = new Vector3D(px, py);
+    pos = new PVector(px, py);
     mass = m;
     type = t;
   }
@@ -604,41 +542,4 @@ class World {
       text("Objects: " + (world.objs.size()), 15, 65);
     }
   }
-}
-
-static class Vector3D {
-  float x; float y; float z;
-
-  Vector3D(float x_, float y_, float z_) { x = x_; y = y_; z = z_; }
-  Vector3D(float x_, float y_) { x = x_; y = y_; z = 0.0; }
-  Vector3D() { x = 0.0; y = 0.0; z = 0.0; }
-  void setX(float x_) { x = x_; }
-  void setY(float y_) { y = y_; }
-  void setZ(float z_) { z = z_; }
-  void setXY(float x_, float y_) { x = x_; y = y_; }
-  void setXYZ(float x_, float y_, float z_) { x = x_; y = y_; z = z_; }
-  void setXYZ(Vector3D v) { x = v.x; y = v.y; z = v.z; }
-  Vector3D get() { return new Vector3D(x, y, z); }
-  void add(Vector3D v) { x += v.x; y += v.y; z += v.z; }
-  void sub(Vector3D v) { x -= v.x; y -= v.y; z -= v.z; }
-  void mult(float n) { x *= n; y *= n; z *= n; }
-  void div(float n) { float f = 1/n; x *= f; y *= f; z *= f; }
-  float dist(Vector3D v) { return (float) Math.sqrt((x - v.x)*(x - v.x) + (y - v.y)*(y - v.y) + (z - v.z)*(z - v.z)); }
-  float dist2(Vector3D v) { return ((x - v.x)*(x - v.x) + (y - v.y)*(y - v.y) + (z - v.z)*(z - v.z)); }
-  float dot(Vector3D v) { return x*v.x + y*v.y + z*v.z; }
-  Vector3D cross(Vector3D v) { return new Vector3D((y*v.z - z*v.y), (z*v.x - x*v.z), (x*v.y - y*v.x)); }
-  float mag() { return (float) Math.sqrt(x*x + y*y + z*z); }
-  float mag2() { return (x*x + y*y + z*z); }
-  void normalize() { float m = mag(); if (m > 0) { div(m); } }
-  void limit(float max) { if (mag() > max) { normalize(); mult(max); } }
-  float heading2D() { return -1*((float) Math.atan2(-y, x)); }
-
-  static Vector3D add(Vector3D v1, Vector3D v2) { return new Vector3D(v1.x + v2.x, v1.y + v2.y, v1.z + v2.z); }
-  static Vector3D sub(Vector3D v1, Vector3D v2) { return new Vector3D(v1.x - v2.x, v1.y - v2.y, v1.z - v2.z); }
-  static Vector3D mult(Vector3D v1, float n) { return new Vector3D(v1.x*n, v1.y*n, v1.z*n); }
-  static Vector3D div(Vector3D v1, float n) { float f = 1/n; return new Vector3D(v1.x*f, v1.y*f, v1.z*f); }
-  static float dist(Vector3D v1, Vector3D v2) { return (float) Math.sqrt((v1.x - v2.x)*(v1.x - v2.x) + (v1.y - v2.y)*(v1.y - v2.y) + (v1.z - v2.z)*(v1.z - v2.z)); }
-  static float dist2(Vector3D v1, Vector3D v2) { return ((v1.x - v2.x)*(v1.x - v2.x) + (v1.y - v2.y)*(v1.y - v2.y) + (v1.z - v2.z)*(v1.z - v2.z)); }
-  static float dot(Vector3D v1, Vector3D v2) { return v1.x*v2.x + v1.y*v2.y + v1.z*v2.z; }
-  static Vector3D cross(Vector3D v1, Vector3D v2) { return new Vector3D((v1.y*v2.z - v1.z*v2.y), (v1.z*v2.x - v1.x*v2.z), (v1.x*v2.y - v1.y*v2.x)); }
 }
