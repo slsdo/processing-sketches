@@ -1,4 +1,4 @@
-/* Cursor Thief - v1.0 - 2010/08/03 */
+/* Cursor Thief - v1.0.0 - 2010/08/03 */
 
 // Global variables
 Thief thief;

@@ -1,4 +1,4 @@
-/* Osmosis - v1.1 - 2013/12/29 */
+/* Osmosis - v1.0.1 - 2013/12/29 */
 
 // Global variables
 World world;
