@@ -8,6 +8,10 @@ Boids
 
 Steering behavior simulation. Use mouse to attract the boids
 
+v1.1.0 - 2014/01/02
+- Updated code to work in JavaScript
+- Code cleanup
+
 v1.0.0 - 2010/07/29
 - Initial release
 
