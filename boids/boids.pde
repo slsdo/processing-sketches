@@ -8,7 +8,7 @@ void setup() {
   size(900, 200);
   frameRate(40);
   
-  initAgents(30, 0);
+  initAgents(30, 3);
 }
 
 // Main draw loop
@@ -35,13 +35,13 @@ void initAgents(int numOfAgent, int numOfPrey) {
 void update() {
   // Update agent state
   for (int i = 0; i < agents.size(); i++) {
-    Agent boid = (Agent) agents.get(i);    
+    Agent boid = (Agent) agents.get(i);
     boid.acc.set(0, 0, 0); // Reset accelertion to 0 each cycle
     steer(boid); // Update steering with approprate behavior
     boid.vel.add(boid.acc); // Update velocity
     switch (boid.action) {
-      //case 1: vel.limit(maxpursue); break; // Limit pursue speed
-      //case 2: vel.limit(maxevade); break; // Limit evade speed
+      case 1: vel.limit(maxpursue); break; // Limit pursue speed
+      case 2: vel.limit(maxevade); break; // Limit evade speed
       default: boid.vel.limit(boid.maxspeed); break; // Limit speed      
     }
     boid.pos.add(boid.vel); // Move agent
@@ -52,14 +52,58 @@ void update() {
 
 void steer(Agent boid) {
   PVector mouse = new PVector(mouseX, mouseY);
+  PVector wan = new PVector();
+  PVector flo = new PVector();
+  PVector avo = new PVector();
+  PVector pur = new PVector();
+  PVector eva = new PVector();
   
-  PVector wan = wander(boid);
-  PVector avo = avoid(boid, mouse);
-  PVector flo = flocking(boid);
-  //PVector pur = new PVector();
-  //PVector eva = new PVector();
+  // Predator behavior
+  if (boid.type == 2) {
+    if (boid.hunt > 0) boid.hunt -= random(0.5);
+    if (boid.hunt < 0) boid.hunt = 10*ceil(random(6, 15));
+    if (boid.hunt < 20 && boid.action == 0) {
+      boid.action = 2;
+       do {
+        int pick = int(random(agents.size() - 1));
+        boid.prey = (Agent) agents.get(pick);
+      }
+      while (boid.prey.type != 1);  
+    }        
+    if (boid.hunt > 20 && boid.action == 2) boid.action = 0;
+  }
   
-  
+  // Calculate steering forces
+  switch (boid.action) {
+    // Evading
+    case 1: {
+      eva = evade(boid);
+      avo = avoid(boid, mouse);  
+      break; 
+    }
+    // Pursuing
+    case 2: {
+      pur = pursue(boid, boid.prey);
+      avo = avoid(boid, mouse);  
+      break;
+    }
+    // Wandering
+    default: {
+      if (boid.type == 1) {
+        wan = wander(boid);
+        avo = avoid(boid, mouse);
+        flo = flocking(boid);
+        eva = evade(boid);
+        break;
+      }
+      if (boid.type == 2) {
+        wan = wander(boid); 
+        avo = avoid(boid, mouse);   
+        break;
+      }
+    }      
+  }
+
   wan.mult(boid.KWander); // Weight
   avo.mult(boid.KAvoid); // Weight
   flo.mult(boid.KFlock); // Weight
@@ -67,6 +111,8 @@ void steer(Agent boid) {
   boid.acc.add(wan);
   boid.acc.add(avo);
   boid.acc.add(flo);
+  boid.acc.add(pur);
+  boid.acc.add(eva);
   boid.acc.limit(boid.maxforce); // Limit to maximum steering force
 }
 
@@ -191,6 +237,47 @@ PVector flocking(Agent boid) {
   return steer;
 }
 
+PVector pursue(Agent boid, Agent target) {
+  PVector steer = new PVector();
+  steer = PVector.sub(target.pos, boid.pos);
+  steer.mult(boid.maxpursue);    
+  return steer;
+}
+
+PVector evade(Agent boid) {
+  PVector steer = new PVector();
+  for (int i = 0; i < agents.size(); i++) {
+    Agent predator = (Agent) agents.get(i);
+    if (predator.type == 2) {
+      float distance = dist2(boid.pos, predator.pos);
+      if (distance < boid.ERadius*boid.ERadius) {
+        boid.action = 1;
+        steer = flee(boid, predator.pos);
+        steer.mult(boid.maxevade);
+        return steer;
+      }
+    }
+  }
+  boid.action = 0;
+  return steer;
+}
+
+PVector flee(Agent boid, PVector target) {
+  PVector steer; // The steering vector
+  PVector desired = PVector.sub(target, boid.pos); // A vector pointing from current location to the target
+  float distance = mag2(desired); // Distance from the target is the magnitude of the vector
+  // If the distance is greater than 0, calc steering (otherwise return zero vector)
+  if (distance > 0 && distance < boid.ARadius*100) {
+    desired.normalize(); // Normalize desired
+    desired.mult(boid.maxforce);
+    steer = PVector.sub(boid.vel, desired); // Steering = Desired minus Velocity
+  }
+  else {
+    steer = new PVector(0, 0);
+  }
+  return steer;
+}
+
 void bounding(Agent boid) {
   if (boid.pos.x < -boid.mass) boid.pos.x = width + boid.mass;
   if (boid.pos.y < -boid.mass) boid.pos.y = height + boid.mass;
@@ -218,24 +305,6 @@ void render() {
       PVector dir = boid.vel.get();
       dir.normalize();
       line(boid.pos.x, boid.pos.y, boid.pos.x + dir.x*10, boid.pos.y + dir.y*10);
-      
-      /***debug*************/
-      // Velocity
-      stroke(16, 148, 16);
-      line(boid.pos.x, boid.pos.y, boid.pos.x + boid.vel.x*4, boid.pos.y + boid.vel.y*4);
-      // Steering
-      stroke(255, 0, 0);
-      line(boid.pos.x, boid.pos.y, boid.pos.x + boid.acc.x*20, boid.pos.y + boid.acc.y*20);
-      // Neighborhood radius
-      fill(239, 239, 239, 10);
-      stroke(132, 132, 132);
-      ellipse(boid.pos.x, boid.pos.y, 80.0*2, 80.0*2);
-      fill(100, 100, 100, 30);
-      noStroke();
-      ellipse(boid.pos.x, boid.pos.y, 20.0*2, 20.0*2);
-      stroke(255, 0, 0);
-      noFill();
-      /******************/
     }
     else if (boid.type == 2) {
       // Draw a triangle rotated in the direction of velocity        
@@ -274,6 +343,8 @@ class Agent {
   int type; // Agent type
   float wdelta; // Wander delta
   int action; // Current action
+  float hunt;
+  Agent prey; // Predator's target
 
   float maxspeed; // Maximum speed
   float maxforce; // Maximum steering force
@@ -281,6 +352,8 @@ class Agent {
   float maxevade; // Maximum steering force
   
   float Rn; // R neighborhood
+  float ARadius; // Arrival: max distance at which the agent may begin to slow down
+  float ERadius; // Evade: radius of evade range
   float BRadius; // Avoid: radius of agent bounding sphere
   float CStep; // Cohesion: move it #% of the way towards the center
   float SDistance; // Separation: small separation distance
@@ -301,6 +374,7 @@ class Agent {
     type = t;
     wdelta = 0.0;
     action = 0;
+    hunt = 10*ceil(random(5, 10));
     
     maxspeed = 5.0;
     maxforce = 3.0;
@@ -308,6 +382,8 @@ class Agent {
     maxevade = 10.0;
     
     Rn = 80.0;
+    ARadius = 100.0;
+    ERadius = 50.0;
     BRadius = 20.0;
     CStep = 1.0/100.0;
     SDistance = 6000.0;
