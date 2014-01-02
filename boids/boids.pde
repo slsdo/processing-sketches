@@ -1,4 +1,4 @@
-/* Boids - v1.1 - 2013/12/29 */
+/* Boids - v1.1.0 - 2014/01/02 */
    
 // Global variables
 ArrayList agents;
