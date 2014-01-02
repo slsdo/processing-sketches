@@ -2,13 +2,14 @@
    
 // Global variables
 ArrayList agents;
-float rad = 60.0;
+float rad = 60.0; // Mouse radius
+
 // Setup the Processing Canvas
 void setup() {
   size(900, 200);
   frameRate(40);
   
-  initAgents(30, 3);
+  initAgents(30, 1);
 }
 
 // Main draw loop
@@ -40,8 +41,8 @@ void update() {
     steer(boid); // Update steering with approprate behavior
     boid.vel.add(boid.acc); // Update velocity
     switch (boid.action) {
-      case 1: vel.limit(maxpursue); break; // Limit pursue speed
-      case 2: vel.limit(maxevade); break; // Limit evade speed
+      case 1: boid.vel.limit(boid.maxpursue); break; // Limit pursue speed
+      case 2: boid.vel.limit(boid.maxevade); break; // Limit evade speed
       default: boid.vel.limit(boid.maxspeed); break; // Limit speed      
     }
     boid.pos.add(boid.vel); // Move agent
@@ -57,6 +58,7 @@ void steer(Agent boid) {
   PVector avo = new PVector();
   PVector pur = new PVector();
   PVector eva = new PVector();
+  PVector arr = new PVector();
   
   // Predator behavior
   if (boid.type == 2) {
@@ -97,8 +99,10 @@ void steer(Agent boid) {
         break;
       }
       if (boid.type == 2) {
-        wan = wander(boid); 
-        avo = avoid(boid, mouse);   
+        wan = wander(boid);
+        if (mouse.x > 5 && mouse.x < width - 5 && mouse.y > 5 && mouse.y < height - 5) {
+          arr = arrival(boid, mouse);
+        }
         break;
       }
     }      
@@ -113,6 +117,7 @@ void steer(Agent boid) {
   boid.acc.add(flo);
   boid.acc.add(pur);
   boid.acc.add(eva);
+  boid.acc.add(arr);
   boid.acc.limit(boid.maxforce); // Limit to maximum steering force
 }
 
@@ -278,6 +283,25 @@ PVector flee(Agent boid, PVector target) {
   return steer;
 }
 
+PVector arrival(Agent boid, PVector target) {
+  PVector steer; // The steering vector
+  PVector desired = PVector.sub(target, boid.pos); // A vector pointing from current location to the target
+  float distance = mag2(desired); // Distance from the target is the magnitude of the vector
+  // If the distance is greater than 0, calc steering (otherwise return zero vector)
+  if (distance > 0) {
+    desired.normalize(); // Normalize desired
+
+    if (distance < boid.ARadius) desired.mult(boid.maxspeed*(distance/boid.ARadius)); // This damping is somewhat arbitrary
+    else desired.mult(boid.maxforce);
+
+    steer = PVector.sub(desired, boid.vel); // Steering = Desired minus Velocity
+  }
+  else {
+    steer = new PVector();
+  }
+  return steer;
+}
+
 void bounding(Agent boid) {
   if (boid.pos.x < -boid.mass) boid.pos.x = width + boid.mass;
   if (boid.pos.y < -boid.mass) boid.pos.y = height + boid.mass;
@@ -322,13 +346,6 @@ void render() {
       popMatrix();
     }
    }
-  // Render info
-  fill(0);
-  text("FPS: " + frameRate, 15, 20);  
-  // Neighborhood radius
-  fill(100, 100, 100, 30);
-  noStroke();
-  ellipse(mouseX, mouseY, rad, rad);
 }
 
 float heading2D(PVector v) { return -1*((float) Math.atan2(-v.y, v.x)); }
@@ -397,3 +414,4 @@ class Agent {
     KAlignment = 1.0;    
   }
 }
+
