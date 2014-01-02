@@ -2,13 +2,13 @@
    
 // Global variables
 ArrayList agents;
-float rad = 40.0;
+float rad = 60.0;
 // Setup the Processing Canvas
 void setup() {
   size(900, 200);
   frameRate(40);
   
-  initAgents(3, 0);
+  initAgents(30, 0);
 }
 
 // Main draw loop
@@ -39,11 +39,11 @@ void update() {
     boid.acc.set(0, 0, 0); // Reset accelertion to 0 each cycle
     steer(boid); // Update steering with approprate behavior
     boid.vel.add(boid.acc); // Update velocity
-    /*switch (action) {
-      case 1: vel.limit(maxpursue); break; // Limit pursue speed
-      case 2: vel.limit(maxevade); break; // Limit evade speed
-      default: vel.limit(maxspeed); break; // Limit speed      
-    }*/
+    switch (boid.action) {
+      //case 1: vel.limit(maxpursue); break; // Limit pursue speed
+      //case 2: vel.limit(maxevade); break; // Limit evade speed
+      default: boid.vel.limit(boid.maxspeed); break; // Limit speed      
+    }
     boid.pos.add(boid.vel); // Move agent
     bounding(boid); // Wrap around the screen or else...
     updateweight(boid); // Updates weights
@@ -55,19 +55,18 @@ void steer(Agent boid) {
   
   PVector wan = wander(boid);
   PVector avo = avoid(boid, mouse);
-  //PVector flo = new PVector();
-  //PVector avo = new PVector();
+  PVector flo = flocking(boid);
   //PVector pur = new PVector();
   //PVector eva = new PVector();
-  //PVector arr = new PVector();
-  //PVector dep = new PVector();
   
   
   wan.mult(boid.KWander); // Weight
   avo.mult(boid.KAvoid); // Weight
+  flo.mult(boid.KFlock); // Weight
   
   boid.acc.add(wan);
   boid.acc.add(avo);
+  boid.acc.add(flo);
   boid.acc.limit(boid.maxforce); // Limit to maximum steering force
 }
 
@@ -141,7 +140,6 @@ PVector avoid(Agent boid, PVector obstacle) {
   return steer;
 }
 
-/*
 PVector flocking(Agent boid) {
   // Get steering forces
   PVector steer = new PVector();
@@ -152,18 +150,18 @@ PVector flocking(Agent boid) {
   // Agents try to fly towards the centre of mass of neighbouring agents
   // Agents try to keep a small distance away from other objects (including other agents)
   // Agents try to match velocity with near agents
-  for (int i = 0; i < boids.size(); i++) {
-    Agent boid = (Agent) boids.get(i);
-    float distance = Vector3D.dist2(pos, boid.pos);
+  for (int i = 0; i < agents.size(); i++) {
+    Agent neighbor = (Agent) agents.get(i);
+    float distance = dist2(boid.pos, neighbor.pos);
     // Go through each agents
-    if (this != boid && distance < Rn*Rn) {
-      coh.add(boid.pos); // Cohesion
-      ali.add(boid.vel); // Alignment
+    if (boid != neighbor && distance < boid.Rn*boid.Rn) {
+      coh.add(neighbor.pos); // Cohesion
+      ali.add(neighbor.vel); // Alignment
       count++;
-    }      
+    }
     // Separation
-    if (this != boid && distance < SDistance) {
-      Vector3D diff = Vector3D.sub(boid.pos, pos); // (agent.position - bJ.position)
+    if (boid != neighbor && distance < boid.SDistance) {
+      PVector diff = PVector.sub(neighbor.pos, boid.pos); // (agent.position - bJ.position)
       diff.normalize();
       distance = (float) Math.sqrt(distance);
       diff.div(distance); // Weighed by distance
@@ -173,26 +171,26 @@ PVector flocking(Agent boid) {
   if (count > 0) {
     // Cohesion - Step towards the center of mass
     coh.div((float)count); // cJ = pc / (N-1)
-    coh.sub(pos); // (pcJ - bJ.position)
-    coh.mult(CStep); // (pcJ - bJ.position) / 100
+    coh.sub(boid.pos); // (pcJ - bJ.position)
+    coh.mult(boid.CStep); // (pcJ - bJ.position) / 100
   // Alignment - Find average velocity
     ali.div((float)count); // pvJ = pvJ / N-1
-    ali.sub(vel); // (pvJ - bJ.velocity)
-    ali.mult(AVelocity); // (pvJ - bJ.velocity) / 8
+    ali.sub(boid.vel); // (pvJ - bJ.velocity)
+    ali.mult(boid.AVelocity); // (pvJ - bJ.velocity) / 8
   }
   // Apply weights
-  coh.mult(wCoh);
-  sep.mult(wSep);
-  ali.mult(wAli);
+  coh.mult(boid.KCohesion);
+  sep.mult(boid.KSeparate);
+  ali.mult(boid.KAlignment);
   // Accumulate forces
   steer.add(coh);
   steer.add(sep);
   steer.add(ali);
   // Add speed
-  steer.mult(maxspeed);
+  steer.mult(boid.maxspeed);
   return steer;
 }
-*/
+
 void bounding(Agent boid) {
   if (boid.pos.x < -boid.mass) boid.pos.x = width + boid.mass;
   if (boid.pos.y < -boid.mass) boid.pos.y = height + boid.mass;
@@ -264,8 +262,8 @@ void render() {
   ellipse(mouseX, mouseY, rad, rad);
 }
 
-float heading2D(PVector vec) { return -1*((float) Math.atan2(-vec.y, vec.x)); }
-float mag2(PVector vec) { return (vec.x*vec.x + vec.y*vec.y + vec.z*vec.z); }
+float heading2D(PVector v) { return -1*((float) Math.atan2(-v.y, v.x)); }
+float mag2(PVector v) { return (v.x*v.x + v.y*v.y + v.z*v.z); }
 float dist2(PVector v1, PVector v2) { return ((v1.x - v2.x)*(v1.x - v2.x) + (v1.y - v2.y)*(v1.y - v2.y) + (v1.z - v2.z)*(v1.z - v2.z)); }
 
 class Agent {
@@ -281,8 +279,13 @@ class Agent {
   float maxforce; // Maximum steering force
   float maxpursue; // Maximum steering force
   float maxevade; // Maximum steering force
+  
+  float Rn; // R neighborhood
   float BRadius; // Avoid: radius of agent bounding sphere
-  //float KNoise = 1.0;
+  float CStep; // Cohesion: move it #% of the way towards the center
+  float SDistance; // Separation: small separation distance
+  float AVelocity; // Alignment: add a small portion to the velocity
+  
   float KWander;
   float KAvoid;
   float KFlock;
@@ -303,7 +306,13 @@ class Agent {
     maxforce = 3.0;
     maxpursue = 20.0;
     maxevade = 10.0;
+    
+    Rn = 80.0;
     BRadius = 20.0;
+    CStep = 1.0/100.0;
+    SDistance = 6000.0;
+    AVelocity = 1.0/8.0;
+    
     KWander = 1.0;
     KAvoid = 5.0;
     KFlock = 1.0;
