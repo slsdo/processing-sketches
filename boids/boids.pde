@@ -2,15 +2,13 @@
    
 // Global variables
 ArrayList agents;
-ArrayList objs;
-
+float rad = 40.0;
 // Setup the Processing Canvas
 void setup() {
   size(900, 200);
   frameRate(40);
   
   initAgents(3, 0);
-  initObj(3);
 }
 
 // Main draw loop
@@ -34,15 +32,6 @@ void initAgents(int numOfAgent, int numOfPrey) {
   }
 }
 
-void initObj(int numOfObj) {
-  objs = new ArrayList();
-  // Add objects
-  for (int i = 0; i < numOfObj; i++) {
-    Obj obj = new Obj(random(1, width), random(1, height), random(50, 100), round(random(1, 2)));
-    objs.add(obj);
-  }
-}
-
 void update() {
   // Update agent state
   for (int i = 0; i < agents.size(); i++) {
@@ -57,21 +46,29 @@ void update() {
     }*/
     boid.pos.add(boid.vel); // Move agent
     bounding(boid); // Wrap around the screen or else...
+    updateweight(boid); // Updates weights
   }
 }
 
 void steer(Agent boid) {
-    PVector wan = wander(boid);
-    //PVector avo = avoid(boid);
-    //PVector flo = new PVector();
-    //PVector avo = new PVector();
-    //PVector pur = new PVector();
-    //PVector eva = new PVector();
-    //PVector arr = new PVector();
-    //PVector dep = new PVector();
-    
-    boid.acc.add(wan);
-    boid.acc.limit(boid.maxforce); // Limit to maximum steering force
+  PVector mouse = new PVector(mouseX, mouseY);
+  
+  PVector wan = wander(boid);
+  PVector avo = avoid(boid, mouse);
+  //PVector flo = new PVector();
+  //PVector avo = new PVector();
+  //PVector pur = new PVector();
+  //PVector eva = new PVector();
+  //PVector arr = new PVector();
+  //PVector dep = new PVector();
+  
+  
+  wan.mult(boid.KWander); // Weight
+  avo.mult(boid.KAvoid); // Weight
+  
+  boid.acc.add(wan);
+  boid.acc.add(avo);
+  boid.acc.limit(boid.maxforce); // Limit to maximum steering force
 }
 
 PVector seek(Agent boid, PVector target) {
@@ -95,7 +92,6 @@ PVector seek(Agent boid, PVector target) {
 PVector wander(Agent boid) {
   float NRadius = 0.3; // Wander: radius of wander noise circle
   float WRadius = 40.0; // Wander: radius of wandering circle
-  float KWander = 1.0;
   boid.wdelta += random(-NRadius, NRadius); // Determine noise ratio
   // Calculate the new location to steer towards on the wander circle
   PVector center = boid.vel.get(); // Get center of wander circle
@@ -106,10 +102,97 @@ PVector wander(Agent boid) {
   PVector target = PVector.add(center, offset); // Determine new target
   // Steer toward new target    
   PVector steer = seek(boid, target); // Steer towards it 
-  steer.mult(KWander); // Weight  
   return steer;
 }
 
+PVector avoid(Agent boid, PVector obstacle) {
+  PVector steer = new PVector();
+  
+  // Distance between object and avoidance sphere
+  float distance = dist2(obstacle, boid.pos);
+  // If distance is less than the sum of the two radius, there is collision
+  float bound = rad + boid.BRadius;
+  if (distance < bound*bound) {
+    boid.KAvoid = 10.0;
+    boid.KWander = 0.1;
+    float collision = (rad*2 + boid.mass)*0.5;
+    if (distance < collision*collision) {
+      steer = PVector.sub(boid.pos, obstacle);
+      steer.mult(boid.maxforce*0.1);
+      return steer;
+    }
+    else {
+      float direction = dist2(obstacle, PVector.add(boid.pos, boid.vel));
+      // If is heading toward obstacle
+      if (direction < distance) {
+        // If steering in the verticle direction
+        if (abs(boid.vel.x) <= abs(boid.vel.y)) {   
+          steer = new PVector((boid.pos.x - obstacle.x), boid.vel.y);
+          steer.mult(boid.maxforce*((bound*bound)/distance)*0.001);       
+        }
+        // If steering in the horizontal direction
+        else {
+          steer = new PVector(boid.vel.x, (boid.pos.y - obstacle.y));
+          steer.mult(boid.maxforce*((bound*bound)/distance)*0.001);  
+        }
+      }
+    }
+  }
+  return steer;
+}
+
+/*
+PVector flocking(Agent boid) {
+  // Get steering forces
+  PVector steer = new PVector();
+  PVector coh = new PVector(); // Perceived center
+  PVector sep = new PVector(); // Displacement
+  PVector ali = new PVector(); // Perceived velocity
+  int count = 0;
+  // Agents try to fly towards the centre of mass of neighbouring agents
+  // Agents try to keep a small distance away from other objects (including other agents)
+  // Agents try to match velocity with near agents
+  for (int i = 0; i < boids.size(); i++) {
+    Agent boid = (Agent) boids.get(i);
+    float distance = Vector3D.dist2(pos, boid.pos);
+    // Go through each agents
+    if (this != boid && distance < Rn*Rn) {
+      coh.add(boid.pos); // Cohesion
+      ali.add(boid.vel); // Alignment
+      count++;
+    }      
+    // Separation
+    if (this != boid && distance < SDistance) {
+      Vector3D diff = Vector3D.sub(boid.pos, pos); // (agent.position - bJ.position)
+      diff.normalize();
+      distance = (float) Math.sqrt(distance);
+      diff.div(distance); // Weighed by distance
+      sep.sub(diff); // c = c - (agent.position - bJ.position)
+    }
+  }
+  if (count > 0) {
+    // Cohesion - Step towards the center of mass
+    coh.div((float)count); // cJ = pc / (N-1)
+    coh.sub(pos); // (pcJ - bJ.position)
+    coh.mult(CStep); // (pcJ - bJ.position) / 100
+  // Alignment - Find average velocity
+    ali.div((float)count); // pvJ = pvJ / N-1
+    ali.sub(vel); // (pvJ - bJ.velocity)
+    ali.mult(AVelocity); // (pvJ - bJ.velocity) / 8
+  }
+  // Apply weights
+  coh.mult(wCoh);
+  sep.mult(wSep);
+  ali.mult(wAli);
+  // Accumulate forces
+  steer.add(coh);
+  steer.add(sep);
+  steer.add(ali);
+  // Add speed
+  steer.mult(maxspeed);
+  return steer;
+}
+*/
 void bounding(Agent boid) {
   if (boid.pos.x < -boid.mass) boid.pos.x = width + boid.mass;
   if (boid.pos.y < -boid.mass) boid.pos.y = height + boid.mass;
@@ -117,6 +200,15 @@ void bounding(Agent boid) {
   if (boid.pos.y > height + boid.mass) boid.pos.y = -boid.mass;
 }
 
+void updateweight(Agent boid) {
+  boid.KWander = 1.0;
+  boid.KAvoid = 5.0;
+  boid.KFlock = 1.0;
+  boid.KCohesion = 1.0;
+  boid.KSeparate = 2.0;
+  boid.KAlignment = 1.0;
+}
+  
 void render() {
   // Render agents
   for (int i = 0; i < agents.size(); i++) {
@@ -129,7 +221,7 @@ void render() {
       dir.normalize();
       line(boid.pos.x, boid.pos.y, boid.pos.x + dir.x*10, boid.pos.y + dir.y*10);
       
-      /***debug***/
+      /***debug*************/
       // Velocity
       stroke(16, 148, 16);
       line(boid.pos.x, boid.pos.y, boid.pos.x + boid.vel.x*4, boid.pos.y + boid.vel.y*4);
@@ -145,6 +237,7 @@ void render() {
       ellipse(boid.pos.x, boid.pos.y, 20.0*2, 20.0*2);
       stroke(255, 0, 0);
       noFill();
+      /******************/
     }
     else if (boid.type == 2) {
       // Draw a triangle rotated in the direction of velocity        
@@ -162,28 +255,18 @@ void render() {
       popMatrix();
     }
    }
-  
-  // Render objects
-  for (int i = 0; i < objs.size(); i++) {
-    Obj obj = (Obj) objs.get(i);    
-    if (obj.type == 1) {
-      fill(200, 180, 160);
-      stroke(50, 30, 20);
-      ellipse(obj.pos.x, obj.pos.y, obj.mass, obj.mass);
-    }
-    else if (obj.type == 2) {
-      fill(120, 190, 150);
-      stroke(80, 70, 40);
-      ellipse(obj.pos.x, obj.pos.y, obj.mass, obj.mass);
-    }
-  }
   // Render info
   fill(0);
-  text("FPS: " + frameRate, 15, 20);
+  text("FPS: " + frameRate, 15, 20);  
+  // Neighborhood radius
+  fill(100, 100, 100, 30);
+  noStroke();
+  ellipse(mouseX, mouseY, rad, rad);
 }
 
 float heading2D(PVector vec) { return -1*((float) Math.atan2(-vec.y, vec.x)); }
 float mag2(PVector vec) { return (vec.x*vec.x + vec.y*vec.y + vec.z*vec.z); }
+float dist2(PVector v1, PVector v2) { return ((v1.x - v2.x)*(v1.x - v2.x) + (v1.y - v2.y)*(v1.y - v2.y) + (v1.z - v2.z)*(v1.z - v2.z)); }
 
 class Agent {
   float mass = 10.0;
@@ -193,10 +276,19 @@ class Agent {
   int type; // Agent type
   float wdelta; // Wander delta
   int action; // Current action
-  float maxspeed = 5.0; // Maximum speed
-  float maxforce = 3.0; // Maximum steering force
+
+  float maxspeed; // Maximum speed
+  float maxforce; // Maximum steering force
   float maxpursue; // Maximum steering force
   float maxevade; // Maximum steering force
+  float BRadius; // Avoid: radius of agent bounding sphere
+  //float KNoise = 1.0;
+  float KWander;
+  float KAvoid;
+  float KFlock;
+  float KCohesion;
+  float KSeparate;
+  float KAlignment;
 
   Agent(float px, float py, int t) {
     mass = 10.0;
@@ -206,22 +298,17 @@ class Agent {
     type = t;
     wdelta = 0.0;
     action = 0;
+    
     maxspeed = 5.0;
     maxforce = 3.0;
     maxpursue = 20.0;
     maxevade = 10.0;
+    BRadius = 20.0;
+    KWander = 1.0;
+    KAvoid = 5.0;
+    KFlock = 1.0;
+    KCohesion = 1.0;
+    KSeparate = 2.0;
+    KAlignment = 1.0;    
   }
 }
-
-class Obj {
-  PVector pos;
-  float mass;
-  int type;
-
-  Obj(float px, float py, float m, int t) {
-    pos = new PVector(px, py);
-    mass = m;
-    type = t;
-  }
-}
-
