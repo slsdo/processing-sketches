@@ -3,7 +3,7 @@ InteractiveSketch
 
 Interactive ambient sketch for websites
 
-Ambience
+Spheres
 -----
 
 Mass-spring ambience, use mouse click to drag the spheres

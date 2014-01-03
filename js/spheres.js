@@ -1,5 +1,5 @@
 /* 
- Ambience - v.1.0.0 - 2014/01/03 
+ Spheres - v.1.0.0 - 2014/01/03 
  PROCESSINGJS.COM HEADER ANIMATION  
  MIT License - F1lT3R/Hyper-Metrix
  Modified by Casey Reas, 7 Nov 2013
@@ -8,7 +8,7 @@
  */
 
 int count = 20; // Set number of circles
-Circle[] circles = new Circle[count];
+Sphere[] circles = new Sphere[count];
 color[] circleColors = new color[count];
 float ds=2; // Set size of dot in circle center
 boolean dragging = false;
@@ -27,7 +27,7 @@ void setup() {
   background(255, 255, 255);
 
   for (int i = 0; i < count; i++) {
-    circles[i] = new Circle();
+    circles[i] = new Sphere();
   }
 }
 
@@ -41,7 +41,7 @@ void draw() {
   }
 }
 
-void update(Circle c) {
+void update(Sphere c) {
   c.acc.set(0, 0, 0);
   float vdamp = 0.99; // Velocity damping force
   PVector m = new PVector(mouseX, mouseY);
@@ -84,7 +84,7 @@ void update(Circle c) {
   if (c.pos.y > height + dm) c.pos.y = -dm;
 }
 
-void render(Circle c) {
+void render(Sphere c) {
   PVector m = new PVector(mouseX, mouseY);
   if (dist2(c.pos, m) < c.rad2) fill(#c93b0e, c.opa*0.5);  // orange if mouseover
   else fill(c.c, c.opa); // regular
@@ -165,7 +165,7 @@ void mouseReleased() {
   dragging = false;
 }
 
-class Circle
+class Sphere
 {
   float w;
   float h;
@@ -179,12 +179,12 @@ class Circle
   color c;
   float opa;
   boolean locked;
-  Circle parent;
+  Sphere parent;
   ArrayList children;
   float k = 0.1; // Spring constant
   float damp = 0.98; // Damping
 
-  Circle() {
+  Sphere() {
     w = random(width); // X
     h = random(height); // Y
     rad = random(10, 70); // Radius
