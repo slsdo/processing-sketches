@@ -1,5 +1,5 @@
 /* 
- Ambience - v.1.0.0 - 2014-01-03 
+ Ambience - v.1.0.0 - 2014/01/03 
  PROCESSINGJS.COM HEADER ANIMATION  
  MIT License - F1lT3R/Hyper-Metrix
  Modified by Casey Reas, 7 Nov 2013
@@ -60,7 +60,7 @@ void update(Circle c) {
     PVector force = PVector.mult(PVector.sub(c.pos, c.rest), -c.k); // f = -k
     c.acc = PVector.div(force, c.rad*0.5); // Set the acceleration, f = ma == a = f/m
     c.vel = PVector.mult(PVector.add(c.vel, c.acc), c.damp); // Set the velocity
-    c.vel.limit(15); // Limit to maximum speed
+    c.vel.limit(14); // Limit to maximum speed
     c.pos.add(c.vel); // Updated position
   }
   else {
@@ -201,4 +201,3 @@ class Circle
     children = new ArrayList();
   }
 }
-
