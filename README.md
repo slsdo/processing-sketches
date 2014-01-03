@@ -3,6 +3,14 @@ InteractiveSketch
 
 Interactive ambient sketch for websites
 
+Ambience
+-----
+
+Mass-spring ambience, use mouse click to drag the spheres
+
+v1.0.0 - 2014/01/03
+- Initial release
+
 Boids
 -----
 
