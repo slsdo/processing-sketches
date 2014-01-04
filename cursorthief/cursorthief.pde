@@ -15,9 +15,9 @@ void setup() {
   size(600, 200);
   thief = new Thief(width*0.5, 170);
   noCursor();
-  mousecursor = loadImage("cursor.png");
-  sweatdrop = loadImage("sweatdrop.png");
-  heart = loadImage("heart.png");
+  mousecursor = loadImage("cursorthief_cursor.png");
+  sweatdrop = loadImage("cursorthief_sweatdrop.png");
+  heart = loadImage("cursorthief_heart.png");
   smooth();
 }
 
