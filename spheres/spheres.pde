@@ -18,6 +18,9 @@ color[] colors = {
   #669933, // Green
   #777777  // Gray
 };
+float ww;
+float hh;
+float wwhh;
 
 // Set up canvas
 void setup() {
@@ -26,6 +29,10 @@ void setup() {
   strokeWeight(1); // Stroke/line/border thickness
   background(255, 255, 255);
 
+  ww = (width*0.5)*(width*0.5);
+  hh = (height*0.5)*(height*0.5);
+  wwhh = ww*hh;
+  
   for (int i = 0; i < count; i++) {
     circles[i] = new Sphere();
   }
@@ -126,12 +133,10 @@ void render(Sphere c) {
 }
 
 float calcOpacity(float posx, float posy) {
-  float w = width*0.5;
-  float h = height*0.5;
-  float opax = abs(w - posx);
-  float opay = abs(h - posy);
-  float opacity = opax*opax*h*h + opay*opay*w*w; // Eqn of ellipse: x^2/a^2 + y^2/b^2 = 1
-  opacity = map(opacity, w*w*h*h + h*h*w*w, 0, -70, 70); // Map to canvas
+  float opax = abs(width*0.5 - posx);
+  float opay = abs(height*0.5 - posy);
+  float opacity = opax*opax*hh + opay*opay*ww; // Eqn of ellipse: x^2/a^2 + y^2/b^2 = 1
+  opacity = map(opacity, wwhh + wwhh, 0, -70, 70); // Map to canvas
   opacity = constrain(opacity, 0, 100);
   return opacity;
 }
