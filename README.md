@@ -1,7 +1,7 @@
 InteractiveSketch
 =====================
 
-Interactive ambient sketch for websites
+Interactive ambient sketch made with Processing
 
 Spheres
 -----
