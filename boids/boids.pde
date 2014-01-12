@@ -6,10 +6,10 @@ float rad = 60.0; // Mouse radius
 
 // Setup the Processing Canvas
 void setup() {
-  size(900, 200);
+  size(700, 300);
   frameRate(40);
   
-  initAgents(30, 1);
+  initAgents(60, 1);
 }
 
 // Main draw loop

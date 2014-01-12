@@ -25,7 +25,7 @@ float wwhh;
 // Set up canvas
 void setup() {
   frameRate(60); // Frame rate
-  size(900, 200); // Size of canvas (width,height)
+  size(700, 300); // Size of canvas (width,height)
   strokeWeight(1); // Stroke/line/border thickness
   background(255, 255, 255);
 

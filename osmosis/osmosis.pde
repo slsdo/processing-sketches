@@ -7,7 +7,7 @@ int MAX_CELL = 10;
 
 // Setup the Processing Canvas
 void setup() {
-  size(900, 200);
+  size(700, 300);
   frameRate(15);
 
   world = new World();
