@@ -8,7 +8,7 @@ float f_friction = 0.5; // Friction force
 float f_max = 5000.0; // Max force
 float f_jump = -60.0; // Jumping force
 
-int relax_iter = 2; // Relaxation iteration
+int relax_iter = 1; // Relaxation iteration
 int[] metabox; // Metaball bounding box
 int screen_size; // Cache screen size
 int ground_h; // Ground height
@@ -116,9 +116,9 @@ void initBlobs()
 {
     enable_ai = true;
     //addBracedBlob(10, 10, 15, 18, 10, width/2, height/2, 1, 30, 300, 300); // Small braced
+    //addTarBlob(10, 5, 20, 40, 10, width/2, height/2, 1, 60, 300, 300); // Small tar
     addTarBlob(10, 5, 20, 40, 10, width/2, height/2, 1, 60, 300, 300); // Small tar
-    addTarBlob(10, 5, 20, 40, 10, width/2, height/2, 1, 60, 300, 300); // Small tar
-    addTarBlob(10, 10, 40, 80, 10, width/2, height/2, 1, 240, 300, 300); // Medium tar
+    //addTarBlob(10, 10, 40, 80, 10, width/2, height/2, 1, 240, 300, 300); // Medium tar
 }
 
 // Some math functions
