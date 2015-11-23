@@ -1,12 +1,20 @@
-InteractiveSketch
+ProcessingSketch
 =====================
 
-Interactive ambient sketch made with Processing
+Interactive sketch made with Processing
+
+Blob
+-----
+
+A small family of physically-based blobs. Soft body simulation using a Verlet-based mass-spring system. Try dragging them around.
+
+v1.0.0 - 2014/11/23
+- Initial release
 
 Spheres
 -----
 
-Mass-spring ambience, use mouse click to drag the spheres
+Mass-spring ambience, use mouse click to drag the spheres.
 
 v1.0.0 - 2014/01/03
 - Initial release
@@ -14,7 +22,7 @@ v1.0.0 - 2014/01/03
 Boids
 -----
 
-Steering behavior simulation. Use mouse to attract the boids
+Steering behavior simulation. Use mouse to attract the boids.
 
 v1.1.0 - 2014/01/02
 - Updated code to work in JavaScript

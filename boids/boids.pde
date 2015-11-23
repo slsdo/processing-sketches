@@ -414,4 +414,3 @@ class Agent {
     KAlignment = 1.0;    
   }
 }
-

@@ -206,4 +206,3 @@ class Sphere
     children = new ArrayList();
   }
 }
-

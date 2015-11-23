@@ -274,4 +274,3 @@ class Cell {
     ellipse(pos[0], pos[1], radius, radius);
   }
 }
-
