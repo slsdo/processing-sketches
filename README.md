@@ -6,7 +6,7 @@ Interactive sketch made with Processing
 Blob
 -----
 
-A small physically-based blobs. Soft body simulation using a Verlet-based mass-spring system. Try dragging them around.
+A small physically-based blob. Soft body simulation using a Verlet-based mass-spring system. Try dragging them around.
 
 v1.0.0 - 2014/11/23
 - Initial release
