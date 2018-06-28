@@ -1,0 +1,108 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>Processing Sketches | slsdo</title>
+    
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+    <meta name="description" content="Interactive Sketches" />
+    <meta name="keywords" content="Interactive Sketches" />
+
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
+
+    <link rel="stylesheet" type="text/css" href="style.css" />
+    <!--[if lt IE 9]>
+        <script type="text/javascript">alert("Your browser does not support the canvas tag.");</script>
+    <![endif]-->
+</head> 
+
+<body>
+    <div class="wrapper">
+        <h1>Processing Sketches</h1>
+        
+        <div id="nav"><a href="https://slsdo.github.io/processing-sketches/">HOME</a> | <a href="https://github.com/slsdo/processing-sketches">CODE</a></div>
+
+        <div id="content">
+            <noscript><p style="font-size:1.4em;color:#c00;text-align:center;">JavaScript is required to view the contents of this page</p></noscript>
+
+            <p>Collection of interactive <a href="https://processing.org/">Processing</a> sketches and small programs, mostly to test out new ideas or provide a diversion and something to write about. This is where good ideas get their start before graduating into a larger project, and bad ideas get burried.</p>
+
+            <p>Click on the sketch to see it in action!</p>
+
+            <h2 id="sketch5">Blob <span style="float:right; color:#777;">2014-11</span></h2>
+
+            <div class="center"><canvas id="blob" data-processing-sources="p5/blob.pde" width="700" height="300"><p style="font-size:.8em;color:#c00;">ERROR: JavaScript is turned off or your browser does not support the canvas tag.</p></canvas></div>
+
+            <p>A small physically-based blob. Soft body simulation using a Verlet-based mass-spring system. Try dragging them around.</p>
+
+            <h2 id="sketch4">Spheres <span style="float:right; color:#777;">2014-01</span></h2>
+
+            <div class="center"><canvas id="spheres" data-processing-sources="p5/spheres.pde" width="700" height="300"><p style="font-size:.8em;color:#c00;">ERROR: JavaScript is turned off or your browser does not support the canvas tag.</p></canvas></div>
+
+            <p>Based on <a href="http://processingjs.org/">Processing.js</a>'s header sketch (and Casey Reas' <a href="http://hello.processing.org/">adaptation of it</a>), this sketch features smart fading based on window size and a simple mass-spring system. Use your mouse to drag the spheres around.</p>
+
+            <h2 id="sketch3">Cursor Thief <span style="float:right; color:#777;">2010-08</span></h2>
+
+            <div class="center"><canvas id="cursorthief" data-processing-sources="p5/cursorthief.pde" width="700" height="200"><p style="font-size:.8em;color:#c00;">ERROR: JavaScript is turned off or your browser does not support the canvas tag.</p></canvas></div>
+
+            <p>Don't let it steal your mouse cursor! Inspired by <a href="http://gprime.net/flash.php/cursorthief">this</a> and <a href="http://www.vivalagames.com/play/cursorthief/">this</a>.</p>
+
+            <h2 id="sketch2">Boids <span style="float:right; color:#777;">2010-07</span></h2>
+
+            <div class="center"><canvas id="boids" data-processing-sources="p5/boids.pde" width="700" height="300"><p style="font-size:.8em;color:#c00;">ERROR: JavaScript is turned off or your browser does not support the canvas tag.</p></canvas></div>
+
+            <p><a href="../steeringbehaviors/">Steering Behaviors</a> prototype, simple steering behaviors simulation based on <a href="http://www.red3d.com/cwr/boids/">Boids</a> by Craig Reynolds, includes steering behaviors such as flocking, random wandering, and object avoidance.</p>
+
+            <p>The blue boids will flock around while the red predator will randomly pursue a boid. Also, the predator is attracted to your mouse cursor while the boids try to avoid it.</p>
+
+            <h2 id="sketch1">Osmosis <span style="float:right; color:#777;">2010-07</span></h2>
+
+            <div class="center"><canvas id="osmosis" data-processing-sources="p5/osmosis.pde" width="700" height="300"><p style="font-size:.8em;color:#c00;">ERROR: JavaScript is turned off or your browser does not support the canvas tag.</p></canvas></div>
+
+            <p>Ambient Survival of the Fittest, Osmosis is based on the puzzle/food-chain genre that often appear in Flash games and sometimes commercial games such as <em><a href="http://www.osmos-game.com/">Osmos</a></em> (which gave inspiration to this project's name).</p>
+
+            <p>The player is the blue cell, use the mouse to move around and avoid getting eaten by the bigger cells while absorb smaller cells to grow. The green cells just float around, the purple ones are a little bit more motivated and likes to dash around, while the red cells are dangerous (but clueless) predators.</p>
+        </div>
+                        
+        <div id="footer">
+            <p>&copy; 2010-2015 slsdo</p>
+        </div>
+    </div>
+
+    <script src="js/jquery-1.11.3.min.js"></script>
+    <script src="js/processing-1.4.8.min.js"></script>
+    <script type="application/javascript">
+        var handler;
+        var renderCanvas = [false, false, false, false, false];
+        var renderElements = [osmosis, boids, cursorthief, spheres, blob];
+        // Init render flag
+        for (var i in renderCanvas) {
+          renderCanvas[i] = false;
+        }
+
+        handler = elementVisibilityMayChange();
+        // Determine if content is in viewport
+        function isElementInViewport (el) {
+            var rect = el.getBoundingClientRect();
+
+            return (
+                rect.top >= 0 &&
+                rect.left >= 0 &&
+                rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) && /*or $(window).height() */
+                rect.right <= (window.innerWidth || document.documentElement.clientWidth) /*or $(window).width() */
+            );
+        }
+        // Action taken
+        function elementVisibilityMayChange () {
+            return function () {
+                for (var i in renderElements) {
+                    if ( !isElementInViewport(renderElements[i]) ) {
+                        renderCanvas[i] = false;
+                    }
+                }
+            }
+        }
+        //jQuery
+        $(window).on('DOMContentLoaded load resize scroll', handler);
+    </script>
+</body>
+</html>
